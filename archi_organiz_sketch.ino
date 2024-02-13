@@ -1,52 +1,35 @@
-//NOTE: There are other ways how to do the webserver but this is the most basic one, feel free to add your touch for this
-
 #include <Wire.h>
-#include <LiquidCrystal_I2C.h> // Install LiquidCrystal I2C by Frank de Brabander or any counterpart for lcds with no I2C adapter
-#include <DHT.h> // Install DHT sensor library by Adafruit
+#include <LiquidCrystal_I2C.h> 
+#include <DHT.h> 
 #include <WiFi.h>
-#include <ESPAsyncWebServer.h> // Install ESPAsyncWebServer by lacamera 
+#include <ESPAsyncWebServer.h> 
 
-// Set the LCD address (you may need to change this depending on your LCD module)
 const int I2C_ADDR = 0x27;
-
-// Set the LCD dimensions (16x2 characters)
 const int LCD_COLS = 16;
 const int LCD_ROWS = 2;
 
-// Create an instance of the LCD class - this will differ to the soldered lcd with no I2C adapter
 LiquidCrystal_I2C lcd(I2C_ADDR, LCD_COLS, LCD_ROWS);
 
-// DHT sensor configuration
-#define DHTPIN 13       // Replace with your chosen GPIO pin for DHT11
+#define DHTPIN 13       
 #define DHTTYPE DHT11  
-
 DHT dht(DHTPIN, DHTTYPE);
 
-// Analog pin connected to the water level sensor
-const int waterLevelPin = 36; // DO NOT change - 36 responds to VP or a Sensor GPIO
-
-// Web Server
+const int waterLevelPin = 36; 
 AsyncWebServer server(80);
 
-//WiFi Connection - much better if you use Mobile Hotspot rather than your WiFi
-const char* ssid = "Nyenyenye"; //Change with your own SSID (WiFi name you want to connect)
-const char* password = "hatdog123"; //Change with the password of that WiFi
+const char* ssid = "Nyenyenye"; 
+const char* password = "hatdog123"; 
 
-// Variable Declaration
 bool showHumidity = false;
 bool showTemperature = false;
 bool showWaterLevel = false;
 
 void setup() {
   Serial.begin(115200);
-
-  // Initialize the LCD
   lcd.init();
   lcd.backlight();
+  delay(2000); 
 
-  delay(2000); // Wait for the LCD to initialize
-
-  // Connect to Wi-Fi
   Serial.println();
   Serial.println();
   Serial.print("Connecting to ");
@@ -64,17 +47,14 @@ void setup() {
   Serial.println("IP address: ");
   Serial.println(WiFi.localIP());
 
-  // Printing the IP Address to the LCD
   lcd.setCursor(0, 0);
   lcd.print("Your IP Address is");
   lcd.setCursor(0, 1);
   lcd.print(WiFi.localIP());
 
-  // Initialize the DHT sensor
   dht.begin();
-  delay(2000); // Wait for the DHT sensor to initialize
+  delay(2000); 
 
-  // New endpoint to update the LCD
   server.on("/updateLCD", HTTP_GET, [](AsyncWebServerRequest *request) {
     if (request->hasParam("lcdData")) {
       String lcdData = request->getParam("lcdData")->value();
@@ -88,12 +68,11 @@ void setup() {
         lcd.print("Water Level");
       }
       lcd.setCursor(0, 1);
-      lcd.print(lcdData.substring(lcdData.indexOf(' ') + 1)); // Print the data without the sensor type
+      lcd.print(lcdData.substring(lcdData.indexOf(' ') + 1)); 
     }
     request->send(200, "text/plain", "LCD updated");
   });
 
-  // Initialize the web server
   server.on("/", HTTP_GET, [](AsyncWebServerRequest *request) {
     String content = "<!DOCTYPE html><html><head><title>ESP32 Sensor Data</title></head><body>";
     content += "<h1>ESP32 Sensor Data</h1>";
@@ -127,12 +106,15 @@ void setup() {
     content += "xhttp.open('GET', '/updateLCD?lcdData=' + encodeURIComponent(lcdData), true);";
     content += "xhttp.send();";
     content += "}";
+    content += "function updateSensorData() {";
+    content += "displayData(document.querySelector('input[name=\"sensor\"]:checked').value);"; // Get the value of the checked radio button and call displayData
+    content += "}";
+    content += "setInterval(updateSensorData, 500);"; // Call updateSensorData every 5 seconds
     content += "</script>";
     content += "</body></html>";
     request->send(200, "text/html", content);
   });
 
-    // New endpoint to provide sensor data based on selected sensor type
   server.on("/data", HTTP_GET, [](AsyncWebServerRequest *request) {
     if (request->hasParam("sensor")) {
       String sensorType = request->getParam("sensor")->value();
@@ -140,7 +122,7 @@ void setup() {
       if (sensorType == "humidity") {
         data = String(dht.readHumidity()) + " %";
       } else if (sensorType == "temperature") {
-        data = String(dht.readTemperature()) + " C"; // Unicode for degree symbol
+        data = String(dht.readTemperature()) + " C"; 
       } else if (sensorType == "waterLevel") {
         data = String(analogRead(waterLevelPin));
       }
@@ -154,7 +136,6 @@ void setup() {
 }
 
 void loop() {
-  // Read sensor data and print it continuously - Testing Purposes
   float humidity = dht.readHumidity();
   float temperature = dht.readTemperature();
   int waterLevelValue = analogRead(waterLevelPin);
@@ -166,5 +147,5 @@ void loop() {
   Serial.print("Water Level Percentage: ");
   Serial.println(waterLevelValue);
   
-  delay(2000); // Adjust delay as needed
+  delay(2000); 
 }
