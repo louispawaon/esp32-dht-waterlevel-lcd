@@ -109,7 +109,7 @@ void setup() {
     content += "function updateSensorData() {";
     content += "displayData(document.querySelector('input[name=\"sensor\"]:checked').value);"; // Get the value of the checked radio button and call displayData
     content += "}";
-    content += "setInterval(updateSensorData, 500);"; // Call updateSensorData every 5 seconds
+    content += "setInterval(updateSensorData, 500);"; // Call updateSensorData every 5 milliseconds
     content += "</script>";
     content += "</body></html>";
     request->send(200, "text/html", content);
