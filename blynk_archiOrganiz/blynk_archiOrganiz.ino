@@ -37,30 +37,6 @@ float humidity = 0;
 float temperature = 0;
 int waterLevelValue = 0;
 
-// BLYNK_WRITE(V0) {
-//   showTemperature = param.asInt();
-//   if (showTemperature) {
-//     showHumidity = false;
-//     showWaterLevel = false;
-//   }
-// }
-
-// BLYNK_WRITE(V1) {
-//   showHumidity = param.asInt();
-//   if (showHumidity) {
-//     showTemperature = false;
-//     showWaterLevel = false;
-//   }
-// }
-
-// BLYNK_WRITE(V2) {
-//   showWaterLevel = param.asInt();
-//   if (showWaterLevel) {
-//     showTemperature = false;
-//     showHumidity = false;
-//   }
-// }
-
 BLYNK_WRITE(V3) {
   int switchState = param.asInt();
   if (switchState == 0) {
