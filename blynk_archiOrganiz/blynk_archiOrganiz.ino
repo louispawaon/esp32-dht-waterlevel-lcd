@@ -33,31 +33,59 @@ bool showHumidity = false;
 bool showTemperature = false;
 bool showWaterLevel = false;
 
-BLYNK_WRITE(V0) {
-  showTemperature = param.asInt();
-  if (showTemperature) {
+float humidity = 0;
+float temperature = 0;
+int waterLevelValue = 0;
+
+// BLYNK_WRITE(V0) {
+//   showTemperature = param.asInt();
+//   if (showTemperature) {
+//     showHumidity = false;
+//     showWaterLevel = false;
+//   }
+// }
+
+// BLYNK_WRITE(V1) {
+//   showHumidity = param.asInt();
+//   if (showHumidity) {
+//     showTemperature = false;
+//     showWaterLevel = false;
+//   }
+// }
+
+// BLYNK_WRITE(V2) {
+//   showWaterLevel = param.asInt();
+//   if (showWaterLevel) {
+//     showTemperature = false;
+//     showHumidity = false;
+//   }
+// }
+
+BLYNK_WRITE(V3) {
+  int switchState = param.asInt();
+  if (switchState == 0) {
+    showTemperature = false;
     showHumidity = false;
     showWaterLevel = false;
-    updateLCD();
+  } else if (switchState == 1) {
+    showTemperature = true;
+    showHumidity = false;
+    showWaterLevel = false;
+  } else if (switchState == 2) {
+    showTemperature = false;
+    showHumidity = true;
+    showWaterLevel = false;
+  } else if (switchState == 3) {
+    showTemperature = false;
+    showHumidity = false;
+    showWaterLevel = true;
   }
 }
 
-BLYNK_WRITE(V1) {
-  showHumidity = param.asInt();
-  if (showHumidity) {
-    showTemperature = false;
-    showWaterLevel = false;
-    updateLCD();
-  }
-}
-
-BLYNK_WRITE(V2) {
-  showWaterLevel = param.asInt();
-  if (showWaterLevel) {
-    showTemperature = false;
-    showHumidity = false;
-    updateLCD();
-  }
+void readSensors() {
+  humidity = dht.readHumidity();
+  temperature = dht.readTemperature();
+  waterLevelValue = analogRead(waterLevelPin);
 }
 
 void updateLCD() {
@@ -66,29 +94,25 @@ void updateLCD() {
     lcd.setCursor(0, 0);
     lcd.print("Temperature:");
     lcd.setCursor(0, 1);
-    lcd.print(dht.readTemperature());
+    lcd.print(temperature);
     lcd.print(" C");
   }
   if (showHumidity) {
     lcd.setCursor(0, 0);
     lcd.print("Humidity:");
     lcd.setCursor(0, 1);
-    lcd.print(dht.readHumidity());
+    lcd.print(humidity);
     lcd.print(" %");
   }
   if (showWaterLevel) {
     lcd.setCursor(0, 0);
     lcd.print("Water Level:");
     lcd.setCursor(0, 1);
-    lcd.print(analogRead(waterLevelPin));
+    lcd.print(waterLevelValue);
   }
 }
 
-void sendSensorData() {
-  float humidity = dht.readHumidity();
-  float temperature = dht.readTemperature();
-  int waterLevelValue = analogRead(waterLevelPin);
-
+void sendSensorDataToBlynk() {
   if (showTemperature) {
     Blynk.virtualWrite(V0, temperature); // Update temperature gauge widget
   }
@@ -111,11 +135,12 @@ void setup() {
   dht.begin();
   delay(2000); 
 
-  timer.setInterval(2000L, sendSensorData); // Set up a timer to send sensor data every 2 seconds
-  timer.setInterval(2000L, updateLCD);
+  timer.setInterval(2000L, readSensors); // Read sensors every 2 seconds
+  timer.setInterval(2000L, updateLCD); // Update LCD every 2 seconds
+  timer.setInterval(2000L, sendSensorDataToBlynk); // Send sensor data to Blynk every 2 seconds
 }
 
 void loop() {
   Blynk.run(); // Run Blynk
-  timer.run(); // Run timer for sending sensor data
+  timer.run(); // Run timers for sensor readings and updates
 }
