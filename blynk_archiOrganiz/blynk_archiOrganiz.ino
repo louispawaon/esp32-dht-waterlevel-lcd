@@ -106,7 +106,18 @@ void setup() {
   lcd.backlight();
   delay(2000); 
 
+  Serial.print("Connecting to ");
+  Serial.println(ssid);
+ 
   Blynk.begin(BLYNK_AUTH_TOKEN, ssid, pass); // Initialize Blynk
+
+  Serial.print("Connected to ");
+  Serial.println(ssid);
+
+  lcd.setCursor(0, 0);
+  lcd.print("You are connected to");
+  lcd.setCursor(0, 1);
+  lcd.print(ssid);
 
   dht.begin();
   delay(2000); 
